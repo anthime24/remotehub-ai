@@ -80,7 +80,7 @@ joignable, et RemoteHub reste **Hors ligne**.
 
 ## Toujours bloqué ?
 
-Ouvrez une [issue](https://github.com/OWNER/remotehub-ai/issues) avec : ce que vous avez fait, ce que vous attendiez, ce qui
+Ouvrez une [issue](https://github.com/anthime24/remotehub-ai/issues) avec : ce que vous avez fait, ce que vous attendiez, ce qui
 s'est passé, les lignes du journal (secrets retirés), vos versions de Windows. **Ne collez jamais votre clé, jeton, IP
 Tailscale ou adresse MAC.**
 

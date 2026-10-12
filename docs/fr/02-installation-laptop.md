@@ -14,7 +14,7 @@ Vérifiez que la tour est joignable : `tailscale ping 100.x.y.z` (l'IP Tailscale
 ## 2. Récupérer RemoteHub-AI
 
 ```powershell
-git clone https://github.com/OWNER/remotehub-ai.git
+git clone https://github.com/anthime24/remotehub-ai.git
 cd remotehub-ai
 ```
 

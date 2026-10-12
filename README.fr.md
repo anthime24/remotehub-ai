@@ -4,7 +4,7 @@
 
 **Contrôlez votre PC fixe depuis n'importe où : allumez-le, ouvrez un terminal, lancez des modèles d'IA, parcourez ses fichiers, utilisez une VM Linux, depuis une seule appli de bureau sombre et simple. Privé par conception : rien n'est exposé sur Internet.**
 
-[![CI](https://github.com/OWNER/remotehub-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/remotehub-ai/actions/workflows/ci.yml)
+[![CI](https://github.com/anthime24/remotehub-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/anthime24/remotehub-ai/actions/workflows/ci.yml)
 ![Licence : MIT](https://img.shields.io/badge/licence-MIT-22d3ee.svg)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3b82f6.svg)
 ![Windows](https://img.shields.io/badge/plateforme-Windows%2010%2F11-a78bfa.svg)
@@ -58,7 +58,7 @@ le cloud, ni jongler avec cinq outils. RemoteHub-AI est le cockpit : une fenêtr
    → [Guide de la tour](docs/fr/01-installation-tour.md)
 2. **Laptop** : installez Tailscale (même compte) et Python 3.10+, puis :
    ```powershell
-   git clone https://github.com/OWNER/remotehub-ai.git
+   git clone https://github.com/anthime24/remotehub-ai.git
    cd remotehub-ai
    run.bat                      # le premier lancement crée config.yaml : indiquez l'IP, l'utilisateur et la MAC de la tour
    ```

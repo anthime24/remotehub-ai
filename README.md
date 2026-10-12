@@ -4,7 +4,7 @@
 
 **Control your home PC from anywhere — turn it on, open a terminal, run AI models, browse its files, use a Linux VM — from one dark, simple desktop app. Private by design: nothing exposed to the Internet.**
 
-[![CI](https://github.com/OWNER/remotehub-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/remotehub-ai/actions/workflows/ci.yml)
+[![CI](https://github.com/anthime24/remotehub-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/anthime24/remotehub-ai/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-22d3ee.svg)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3b82f6.svg)
 ![Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-a78bfa.svg)
@@ -58,7 +58,7 @@ juggling five different tools. RemoteHub-AI is the cockpit: one window, one SSH 
    → [Tower guide](docs/en/01-tower-setup.md)
 2. **Laptop** — install Tailscale (same account) and Python 3.10+, then:
    ```powershell
-   git clone https://github.com/OWNER/remotehub-ai.git
+   git clone https://github.com/anthime24/remotehub-ai.git
    cd remotehub-ai
    run.bat                      # first run creates config.yaml: fill in your tower's IP, user and MAC
    ```

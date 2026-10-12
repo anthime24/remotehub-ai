@@ -14,7 +14,7 @@ Check the tower is reachable: `tailscale ping 100.x.y.z` (your tower's Tailscale
 ## 2. Get RemoteHub-AI
 
 ```powershell
-git clone https://github.com/OWNER/remotehub-ai.git
+git clone https://github.com/anthime24/remotehub-ai.git
 cd remotehub-ai
 ```
 

@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability / Faille de sécurité
-    url: https://github.com/OWNER/remotehub-ai/security/advisories/new
+    url: https://github.com/anthime24/remotehub-ai/security/advisories/new
     about: Please report security problems privately (see SECURITY.md), not in a public issue.

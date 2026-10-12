@@ -78,7 +78,7 @@ reachable, and RemoteHub stays **Offline**.
 
 ## Still stuck?
 
-Open an [issue](https://github.com/OWNER/remotehub-ai/issues) with: what you did, what you expected, what happened, the
+Open an [issue](https://github.com/anthime24/remotehub-ai/issues) with: what you did, what you expected, what happened, the
 log lines (secrets removed), your Windows versions. **Never paste your key, token, Tailscale IP or MAC address.**
 
 ---
