@@ -1,0 +1,7 @@
+#!/bin/sh
+# Blocks a commit that contains personal data or secrets.
+# Enable once with:  git config core.hooksPath .githooks
+python tools/check_privacy.py || {
+  echo "Commit blocked by tools/check_privacy.py (see above)." >&2
+  exit 1
+}

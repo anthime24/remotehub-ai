@@ -1,0 +1,48 @@
+# --- YOUR private configuration and secrets: never commit these -----------------
+config.yaml
+config.local.yaml
+user_state.json
+freebox_token.json
+.privacy-denylist
+vm_credentials*.txt
+vm_hostkey*.txt
+*.token
+.env
+.env.*
+*.rdp
+
+# --- keys and certificates (the public Freebox root CA below is the only exception) ---
+*.pem
+*.key
+*.ppk
+id_rsa*
+id_ed25519*
+id_ecdsa*
+known_hosts*
+!core/data/freebox_ca.pem
+
+# --- local tools / binaries ---------------------------------------------------
+bin/
+*.exe
+logs/
+*.log
+
+# --- Python / tooling ---------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# --- editors / OS -------------------------------------------------------------
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

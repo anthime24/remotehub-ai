@@ -1,0 +1,285 @@
+# =============================================================================
+#  RemoteHub-AI - configuration
+#
+#  1. Copy this file to `config.yaml` (it is git-ignored: your IPs, MAC address and secrets stay local).
+#  2. Edit the values marked  <== CHANGE.
+#  3. Restart the app after every change.
+#
+#  Variables usable in commands/URLs:  {{tailscale_ip}} {{lan_ip}} {{user}} {{ssh_port}} {{mac}}
+#  {{scripts_dir}} {{project_dir}} and every key of `vars:` / `local_tools:`.
+#
+#  Fr : copiez ce fichier en `config.yaml` (ignoré par git : vos IP, adresse MAC et secrets restent chez vous),
+#  modifiez les lignes marquées <== CHANGE, puis relancez l'application.
+# =============================================================================
+
+language: auto            # auto (system language) | en | fr
+
+connection:
+  name: "MY-TOWER"                   # display name only
+  tailscale_ip: "100.x.y.z"          # <== CHANGE  your tower's Tailscale IP (`tailscale ip -4` on the tower)
+  lan_ip: ""                         # optional: tower's LAN IP, tried when Tailscale is unreachable
+  ssh_port: 22
+  user: "your-windows-user"          # <== CHANGE  the Windows account that accepts SSH on the tower
+  key_file: "~/.ssh/id_ed25519"      # private key on THIS laptop (public key goes to the tower)
+  # Password login is discouraged. If you must, DO NOT write it here: set the environment variable below.
+  password_env: "REMOTEHUB_SSH_PASSWORD"
+  mac: "AA:BB:CC:DD:EE:FF"           # <== CHANGE  tower's Ethernet MAC address (for Wake-on-LAN)
+  connect_timeout: 8
+
+vars:
+  # Folder on the tower where tools/deploy_tower.py copies the tower scripts.
+  scripts_dir: 'C:\RemoteHub'
+  # --- Linux VM (VirtualBox) - see docs/en/04-linux-vm.md ---
+  vm_name: "RemoteHub-Linux"
+  vm_user: "remotehub"               # the Linux user created in the VM
+  vm_start_ps: '& powershell -NoProfile -ExecutionPolicy Bypass -File "{{scripts_dir}}\vm\ensure_vm.ps1" -VmName "{{vm_name}}"'
+  vm_stop_ps: '& "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" controlvm "{{vm_name}}" acpipowerbutton'
+  # --- JupyterLab ---
+  jupyter_token: "change-me"         # <== CHANGE  long random string (e.g. `python -c "import secrets;print(secrets.token_urlsafe(32))"`)
+
+health:
+  interval_s: 4              # health-check period (non blocking)
+  tcp_timeout_s: 2
+  boot_grace_s: 240          # after a Wake-on-LAN, stay "Booting" (yellow) for this long
+
+monitoring:
+  enabled: true
+  interval_s: 3              # raise it (e.g. 30) on a metered mobile connection
+  # Leave empty to use the built-in script (CPU / RAM / GPU / VRAM). A custom command must print one JSON line
+  # with the keys: cpu, ram_used_gb, ram_total_gb, gpu, vram_used_mb, vram_total_mb, gpu_temp.
+  custom_command: ""
+
+wake_on_lan:
+  # The packet is sent on EVERY local interface (Wi-Fi, Ethernet...). Works when the laptop is on the tower's LAN.
+  broadcasts: ["192.168.1.255", "255.255.255.255"]    # adapt the first one to your LAN
+  ports: [9, 7]
+  unicast: []                # LAN IP of the tower: only works while the router keeps its ARP entry (unreliable)
+  # From outside the LAN (4G, school...) a broadcast cannot reach the tower. Reliable options:
+  #   - a relay: an always-on LAN machine reachable over SSH/Tailscale (Raspberry Pi, NAS) with `wakeonlan` installed;
+  #   - your router's own Wake-on-LAN API (see `freebox:` below for Freebox).
+  relay:
+    enabled: false
+    host: "100.x.y.z"        # the relay's Tailscale IP (must already be in ~/.ssh/known_hosts: ssh to it once)
+    port: 22
+    user: "pi"
+    key_file: "~/.ssh/id_ed25519"
+    command: "wakeonlan {{mac}}"
+
+# OPTIONAL - Wake-on-LAN through a Freebox (France). Register once: python tools/register_freebox.py
+freebox:
+  enabled: false
+  interface: "pub"
+  token_file: "freebox_token.json"   # SECRET, git-ignored
+
+# File explorer (SFTP over the SSH session).
+# The SSH account is usually an administrator, so the WHOLE tower is reachable: `roots` are only shortcuts.
+files:
+  start_path: 'C:\Users\Public'             # folder shown at startup ("" = list of drives)
+  download_dir: '~/Downloads/RemoteHub'     # where downloads land on the laptop
+  roots:
+    - 'C:\Users\Public'
+    - 'D:\'
+
+power:
+  restart_command: 'powershell -NoProfile -Command "Restart-Computer -Force"'
+  shutdown_command: "shutdown /s /t 0"
+
+local_tools:                  # programs on THIS laptop
+  warp_exe: '%LOCALAPPDATA%\Programs\Warp\warp.exe'
+  pycharm_exe: 'C:\Program Files\JetBrains\PyCharm\bin\pycharm64.exe'   # adjust to your version
+  rustdesk_exe: 'C:\Program Files\RustDesk\rustdesk.exe'
+
+# -----------------------------------------------------------------------------
+#  ACTIONS (launcher cards). Each action is either one step (`type:` + parameters) or a sequence `steps:`
+#  (+ `stop_steps:` to show a Stop button). Step types:
+#    local       command: local command line                          [console: true]
+#    warp_ssh    [remote_command: ...] | [command: full ssh command]  terminal on the tower (Warp > Windows Terminal > cmd)
+#    ssh         command: remote cmd line | powershell: remote PS script
+#                [detach: true -> background]  [ignore_errors: true]  [timeout: 30]
+#    tunnel      local_port, remote_port [remote_host: localhost]     forward a tower port to the laptop
+#    tunnel_stop local_port
+#    url         url: http(s)://... or custom scheme (jetbrains-gateway://, ...)
+#    rdp         local_port, [user], [width], [height]                open mstsc on a tunnelled port
+#    check_file  path                                                  fail early if a file is missing on the tower
+#    wait_port   remote_port, timeout, [remote_host]
+#                [expect_banner: "SSH-" | probe_hex + expect_hex | http_path: /api  -> wait for a real answer]
+#    wait        seconds
+#  category: dev | ai | system (section of the window)      tag: small label on the card
+#  Add `name_fr:` / `description_fr:` for a French label (any language code works the same way).
+# -----------------------------------------------------------------------------
+actions:
+  # ---------------- Developer tools ----------------
+  - id: warp
+    name: "Terminal (SSH)"
+    name_fr: "Terminal (SSH)"
+    tag: "TERM"
+    category: dev
+    description: "Opens a terminal connected to the tower over SSH"
+    description_fr: "Ouvre un terminal connecté en SSH à la tour"
+    type: warp_ssh
+
+  - id: pycharm
+    name: "PyCharm Remote"
+    tag: "IDE"
+    category: dev
+    description: "Opens PyCharm: then Remote Development > SSH to your tower"
+    description_fr: "Ouvre PyCharm : puis Remote Development > SSH vers votre tour"
+    type: local
+    command: '"{{pycharm_exe}}"'
+
+  - id: rustdesk
+    name: "RustDesk (remote desktop)"
+    name_fr: "RustDesk (bureau à distance)"
+    tag: "GUI"
+    category: dev
+    description: "Over SSH: no port exposed on the tower"
+    description_fr: "Via SSH : aucun port exposé sur la tour"
+    steps:
+      # On the tower enable "Direct IP access" in RustDesk (port 21118) and set a permanent password.
+      - {type: tunnel, local_port: 31118, remote_host: "127.0.0.1", remote_port: 21118}
+      - {type: local, command: '"{{rustdesk_exe}}" --connect 127.0.0.1:31118'}
+    stop_steps:
+      - {type: tunnel_stop, local_port: 31118}
+
+  # ---------------- AI hub ----------------
+  - id: ollama
+    name: "Ollama (LLM)"
+    tag: "LLM"
+    category: ai
+    description: "Ollama service + tunnel 127.0.0.1:11435 (11434 stays free for a local Ollama)"
+    description_fr: "Service Ollama + tunnel 127.0.0.1:11435 (11434 reste libre pour un Ollama local)"
+    steps:
+      - {type: check_file, path: '{{scripts_dir}}\services\Start-Ollama.ps1'}
+      - {type: ssh, detach: true, powershell: '& "{{scripts_dir}}\services\Start-Ollama.ps1"'}
+      - {type: wait_port, remote_host: "127.0.0.1", remote_port: 11434, http_path: /api/version, timeout: 90}
+      - {type: tunnel, local_port: 11435, remote_host: "127.0.0.1", remote_port: 11434}
+    stop_steps:
+      - {type: tunnel_stop, local_port: 11435}
+      - type: ssh
+        ignore_errors: true
+        powershell: 'Get-Process ollama*, "ollama app" -ErrorAction SilentlyContinue | Stop-Process -Force'
+
+  - id: comfyui
+    name: "ComfyUI"
+    tag: "SD"
+    category: ai
+    description: "ComfyUI server + tunnel localhost:8188 + browser (install ComfyUI on the tower first)"
+    description_fr: "Serveur ComfyUI + tunnel localhost:8188 + navigateur (installez d'abord ComfyUI sur la tour)"
+    steps:
+      - {type: check_file, path: '{{scripts_dir}}\services\Start-ComfyUI.ps1'}
+      - {type: ssh, detach: true, powershell: '& "{{scripts_dir}}\services\Start-ComfyUI.ps1"'}
+      - {type: wait_port, remote_host: "127.0.0.1", remote_port: 8188, http_path: /, timeout: 180}
+      - {type: tunnel, local_port: 8188, remote_host: "127.0.0.1", remote_port: 8188}
+      - {type: url, url: "http://127.0.0.1:8188"}
+    stop_steps:
+      - {type: tunnel_stop, local_port: 8188}
+      - type: ssh
+        ignore_errors: true
+        powershell: |
+          Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
+            Where-Object { $_.CommandLine -match 'ComfyUI' } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+
+  - id: jupyter
+    name: "JupyterLab"
+    tag: "NB"
+    category: ai
+    description: "JupyterLab (token-protected, loopback only) -> localhost:8888"
+    description_fr: "JupyterLab (protégé par jeton, loopback uniquement) -> localhost:8888"
+    steps:
+      - {type: check_file, path: '{{scripts_dir}}\services\Start-JupyterLab.ps1'}
+      - {type: ssh, detach: true, powershell: '& "{{scripts_dir}}\services\Start-JupyterLab.ps1" -Token "{{jupyter_token}}"'}
+      - {type: wait_port, remote_host: "127.0.0.1", remote_port: 8888, http_path: /api, timeout: 90}
+      - {type: tunnel, local_port: 8888, remote_host: "127.0.0.1", remote_port: 8888}
+      - {type: url, url: "http://127.0.0.1:8888/lab?token={{jupyter_token}}"}
+    stop_steps:
+      - {type: tunnel_stop, local_port: 8888}
+      - type: ssh
+        ignore_errors: true
+        powershell: |
+          Get-CimInstance Win32_Process |
+            Where-Object { $_.CommandLine -match 'jupyter' -and $_.ProcessId -ne $PID } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+
+  # ---------------- Containers / VMs ----------------
+  # The Linux VM sits behind VirtualBox NAT: SSH (2223) and RDP (33890) are only reachable from the tower itself
+  # (127.0.0.1); RemoteHub opens them through the SSH tunnel. See docs/en/04-linux-vm.md.
+  - id: vm_linux
+    name: "Linux VM (Ubuntu)"
+    name_fr: "VM Linux (Ubuntu)"
+    tag: "VM"
+    category: system
+    description: "Starts / stops the VM on the tower (Stop = clean shutdown)"
+    description_fr: "Démarre / arrête la VM sur la tour (Stop = extinction propre)"
+    steps:
+      - {type: ssh, detach: true, powershell: '{{vm_start_ps}}'}
+      - {type: wait_port, remote_host: "127.0.0.1", remote_port: 2223, expect_banner: "SSH-", timeout: 480}
+    stop_steps:
+      - {type: tunnel_stop, local_port: 2224}
+      - {type: tunnel_stop, local_port: 33891}
+      - {type: ssh, powershell: '{{vm_stop_ps}}', ignore_errors: true}
+
+  - id: vm_terminal
+    name: "Linux VM terminal"
+    name_fr: "Terminal VM Linux"
+    tag: "LINUX"
+    category: system
+    description: "Starts the VM if needed and opens an SSH terminal in it"
+    description_fr: "Démarre la VM si besoin et ouvre un terminal SSH dedans"
+    steps:
+      - {type: ssh, detach: true, powershell: '{{vm_start_ps}}'}
+      - {type: wait_port, remote_host: "127.0.0.1", remote_port: 2223, expect_banner: "SSH-", timeout: 480}
+      - {type: tunnel, local_port: 2224, remote_host: "127.0.0.1", remote_port: 2223}
+      - type: warp_ssh
+        command: 'ssh -p 2224 -o HostKeyAlias=remotehub-vm -o StrictHostKeyChecking=accept-new {{vm_user}}@127.0.0.1'
+    stop_steps:
+      - {type: tunnel_stop, local_port: 2224}
+
+  - id: vm_desktop
+    name: "Linux desktop (RDP)"
+    name_fr: "Bureau Linux (RDP)"
+    tag: "RDP"
+    category: system
+    description: "Starts the VM if needed and opens its desktop (log in with the VM user's password)"
+    description_fr: "Démarre la VM si besoin et ouvre son bureau (mot de passe de l'utilisateur de la VM)"
+    steps:
+      - {type: ssh, detach: true, powershell: '{{vm_start_ps}}'}
+      - {type: wait_port, remote_host: "127.0.0.1", remote_port: 33890, probe_hex: "030000130ee000000000000100080003000000", expect_hex: "03", timeout: 480}
+      - {type: tunnel, local_port: 33891, remote_host: "127.0.0.1", remote_port: 33890}
+      - {type: rdp, local_port: 33891, user: "{{vm_user}}"}
+    stop_steps:
+      - {type: tunnel_stop, local_port: 33891}
+
+  - id: docker_example
+    name: "Docker: my-container"
+    name_fr: "Docker : mon-conteneur"
+    tag: "DOCKER"
+    category: system
+    description: "docker start / stop (replace the container name)"
+    description_fr: "docker start / stop (remplacez le nom du conteneur)"
+    steps:
+      - {type: ssh, command: "docker start my-container"}
+    stop_steps:
+      - {type: ssh, command: "docker stop my-container"}
+
+  - id: wsl_shell
+    name: "Ubuntu terminal (WSL2)"
+    name_fr: "Terminal Ubuntu (WSL2)"
+    tag: "LINUX"
+    category: system
+    description: "Shell inside the tower's WSL2 distribution"
+    description_fr: "Shell dans la distribution WSL2 de la tour"
+    type: warp_ssh
+    remote_command: "wsl -d Ubuntu"
+
+  - id: wsl_keepalive
+    name: "Ubuntu (WSL2): keep alive"
+    name_fr: "Ubuntu (WSL2) : garder allumée"
+    tag: "WSL"
+    category: system
+    description: "Keeps WSL running in the background (it stops itself when idle)"
+    description_fr: "Maintient WSL en vie en arrière-plan (il s'éteint seul quand il est inactif)"
+    steps:
+      - {type: ssh, detach: true, powershell: 'wsl -d Ubuntu --exec sleep infinity'}
+    stop_steps:
+      - {type: ssh, command: "wsl --terminate Ubuntu"}

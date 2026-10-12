@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest        # the app targets Windows (Tk, mstsc, PowerShell)
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: pytest
+      - name: PowerShell scripts parse without errors
+        shell: pwsh
+        run: |
+          $bad = 0
+          Get-ChildItem tower -Recurse -Filter *.ps1 | ForEach-Object {
+            $errs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs)
+            if ($errs) { $bad++; $errs | ForEach-Object { Write-Host "$($_.Extent.File):$($_.Extent.StartLineNumber) $($_.Message)" } }
+          }
+          if ($bad) { exit 1 }
+
+  privacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: No personal data or secrets in the repository
+        run: python tools/check_privacy.py

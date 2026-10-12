@@ -1,0 +1,28 @@
+[project]
+name = "remotehub-ai"
+version = "1.0.0"
+description = "A desktop dashboard to control a remote Windows PC over Tailscale: Wake-on-LAN, SSH tunnels, launchers, file explorer, Linux VM."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = [".venv", "build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+  "E501",   # long lines: the UI strings are easier to read unwrapped
+  "UP037",  # quoted annotations are fine
+  "B904",   # `raise ... from` is used where it matters
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tools/*.py" = ["E402"]       # sys.path is adjusted before the project imports
+"tests/*.py" = ["E402", "E701", "E702"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
